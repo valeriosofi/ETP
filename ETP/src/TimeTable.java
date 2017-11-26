@@ -8,7 +8,7 @@ import java.io.*;
 public class TimeTable {
 	private Integer tmax;
 	private Map<Integer,Exam> exams;
-	private Map<String,List<Integer>> students;  //per ogni matricola la lista degli esami a cui si è iscritto
+	private Map<String,List<Exam>> students;  //per ogni matricola la lista degli esami a cui si è iscritto
 	private int[][] n;
 	private int E;
 	
@@ -65,15 +65,19 @@ public class TimeTable {
 			 {
 				 s=new Scanner(line);
 				 String student=s.next();
-				 List<Integer>l=students.get(student);
+				 List<Exam>l=students.get(student);
 				 if(l==null)
 				 {
 					 l=new ArrayList<>();
-					 l.add(s.nextInt());
+					 Exam e=exams.get(s.nextInt());
+					 l.add(e);
 					 students.put(student, l);
 				 }
 				 else
-					 l.add(s.nextInt());
+				 {
+					 Exam e=exams.get(s.nextInt());
+					 l.add(e);
+				 }
 				 s.close();
 
 			 }
@@ -84,15 +88,15 @@ public class TimeTable {
 			 for (int i=0; i<students.keySet().size();i++)
 			 {
 				 String st="s"+(i+1);
-				List<Integer> l=students.get(st);
+				List<Exam> l=students.get(st);
 				 for(int j=0;j<l.size();j++)
 				 {
 					 for(int k=0; k<l.size() ;k++)
 					 {
 						if(j!=k)
 						{
-							int row=l.get(j);
-							int col=l.get(k);
+							int row=l.get(j).getId();
+							int col=l.get(k).getId();
 							 n[row-1][col-1]++;//esami partono da 1
 							
 						}
