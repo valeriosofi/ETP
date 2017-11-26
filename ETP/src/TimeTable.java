@@ -7,10 +7,10 @@ import java.util.TreeMap;
 import java.io.*;
 public class TimeTable {
 	private Integer tmax;
-	private Map<Integer,Integer> exams;
+	private Map<Integer,Exam> exams;
 	private Map<String,List<Integer>> students;  //per ogni matricola la lista degli esami a cui si è iscritto
 	private int[][] n;
-	
+	private int E;
 	
 	public TimeTable()
 	{
@@ -41,16 +41,18 @@ public class TimeTable {
 			 while((line=in.readLine())!=null)
 			 {
 				 s=new Scanner(line);
-				 exams.put(s.nextInt(),s.nextInt());
+				 Exam e=new Exam(s.nextInt(),s.nextInt());
+				 exams.put(e.getId(),e);
 				 s.close();
 			 }
-			 n=new int[exams.keySet().size()][];
+			 E=exams.keySet().size();
+			 n=new int[E][E];
 			 //System.out.println(exams.keySet().size());
 			 
-			 for (int i = 0; i < exams.keySet().size(); i++) {        
+		/*	 for (int i = 0; i < exams.keySet().size(); i++) {        
 				 n[i] = new int[exams.keySet().size()]; 
 			 }
-
+*/
 		 }  catch (IOException e) {};
 		 
 		 try(BufferedReader in=new BufferedReader(new FileReader(stu));
@@ -98,9 +100,9 @@ public class TimeTable {
 					 
 				 }
 			 }
-			 for(int i=0;i<exams.keySet().size();i++)
+			 for(int i=0;i<E;i++)
 			 {
-				 for(int j=0;j<exams.keySet().size();j++)
+				 for(int j=0;j<E;j++)
 				 {
 					 
 					 out.print(n[i][j]);
