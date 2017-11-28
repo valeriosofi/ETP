@@ -3,19 +3,25 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.io.*;
 public class TimeTable {
 	private Integer tmax;
-	private Map<Integer,Exam> exams;
-	private Map<String,List<Exam>> students;  //per ogni matricola la lista degli esami a cui si è iscritto
+	private SortedMap<Integer,Exam> exams;
+	private SortedMap<String,List<Exam>> students;  //per ogni matricola la lista degli esami a cui si è iscritto
 	private int[][] n;
-	private int E;
+	private int E,counter;
+	private SortedMap<Integer,List<Exam>> current_solution;
+	private Move[] tabu;
+	
 	
 	public TimeTable()
 	{
 		exams=new TreeMap<>();
 		students=new TreeMap<>();
+		current_solution=new TreeMap<>();
+		tabu=new Move[3];
 	}
 	
 	public void Initialize (String slo,String stu, String exm)
@@ -65,33 +71,38 @@ public class TimeTable {
 			 {
 				 s=new Scanner(line);
 				 String student=s.next();
+				 
 				 List<Exam>l=students.get(student);
 				 if(l==null)
 				 {
 					 l=new ArrayList<>();
 					 Exam e=exams.get(s.nextInt());
+					 e.addStudent(student);
 					 l.add(e);
 					 students.put(student, l);
 				 }
 				 else
 				 {
+					 
 					 Exam e=exams.get(s.nextInt());
+					 e.addStudent(student);
 					 l.add(e);
 				 }
 				 s.close();
 
 			 }
-			 System.out.println(students.keySet().size());
+			
+			 //System.out.println(students.keySet().size());
 			 
 			 //popolo n_ij
-//			 System.out.println(Arrays.deepToString(n)); 
 			 for (int i=0; i<students.keySet().size();i++)
 			 {
 				 String st="s"+(i+1);
+				 
 				List<Exam> l=students.get(st);
 				 for(int j=0;j<l.size();j++)
 				 {
-					 for(int k=0; k<l.size() ;k++)
+					 for(int k=0; k<l.size() ;k++) //anche k =j -> evito permutazioni
 					 {
 						if(j!=k)
 						{
@@ -104,7 +115,7 @@ public class TimeTable {
 					 
 				 }
 			 }
-			 for(int i=0;i<E;i++)
+		/*	 for(int i=0;i<E;i++)
 			 {
 				 for(int j=0;j<E;j++)
 				 {
@@ -113,7 +124,7 @@ public class TimeTable {
 					 out.print(" ");
 				 }
 				 out.println();
-			 }
+			 }*/
 			 System.out.println(Arrays.deepToString(n)); 
 
 		 }  catch (IOException e) {};
@@ -121,4 +132,29 @@ public class TimeTable {
 		 
 	}
 
+	public SortedMap <Integer,List<Exam>> Generate_Initial_Solution()
+	{
+		return null;
+		
+		
+	}
+	
+	public void Solve()
+	{
+		return ;
+	}
+	
+	public boolean checkFeasibility(Exam e, SortedMap<Integer,List<Exam>> solution)
+	{
+		Integer t=e.getTime_slot();
+		List<Exam> l=solution.get(t);
+		
+		for(int i=0;i<l.size();i++)
+		{
+			if(n[e.getId()-1][(l.get(i).getId())-1]>0)
+			 return false;
+		}
+		
+		return true;
+	}
 }
