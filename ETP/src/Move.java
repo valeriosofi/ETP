@@ -28,5 +28,9 @@ public class Move {
 		this.from = from;
 		this.to = to;
 	}
+	public boolean Equals(Move m)
+	{
+		return e.getId()==m.getE().getId() && from==m.getFrom() && to==m.getTo();
+	}
 
 }

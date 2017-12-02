@@ -6,16 +6,21 @@ public class Exam {
 	private int tot_stud;
 	private Integer time_slot;
 	private List<String> students;
-	
+	private List<Integer> timeSlotsDisponibili;
+
 	public Exam(int id,int tot_stud)
 	{
 		this.id=id;
 		this.tot_stud=tot_stud;
 		time_slot=-1;
 		students=new ArrayList<>();
+		timeSlotsDisponibili = new ArrayList<>();
 	}
 //x
 
+	public void setTime_slot(Integer time_slot) {
+		this.time_slot = time_slot;
+	}
 	public List<String> getStudents() {
 		return students;
 	}
@@ -38,5 +43,17 @@ public class Exam {
 	{
 		students.add(s);
 		return;
+	}
+	
+	public String toString(){
+		return "esame " + id;
+	}
+	
+	public List<Integer> getTimeSlotsDisponibili() {
+		return timeSlotsDisponibili;
+	}
+
+	public void setTimeSlotsDisponibili(List<Integer> timeSlotsDisponibili) {
+		this.timeSlotsDisponibili = timeSlotsDisponibili;
 	}
 }
