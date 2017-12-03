@@ -17,9 +17,9 @@ public class TimeTable {
 	private SortedMap<Integer,Exam> exams;
 	private SortedMap<String,List<Exam>> students;  //per ogni matricola la lista degli esami a cui si è iscritto
 	private int[][] n;
-	private int E,counter,S,infeasibility,count, worst,num;
+	private int E,iteration,S,count, worst,num;
 	private double current_obj;
-	private boolean trovato = false, compatibile=true;
+	private boolean trovato = false, compatibile=true, continua=true;
 	private SortedMap<Integer,List<Exam>> initialSolution;
 	private SortedMap<Integer,List<Exam>> current_solution;
 	private Move[] tabu;
@@ -222,17 +222,22 @@ public class TimeTable {
 		}
 		return compatibile;
 	}
-	
 
+	
 	public SortedMap <Integer,List<Exam>> Generate_Initial_Solution() {
 		while(!trovato){
-			initialSolution = initializeInitialSolution();
-			SortedMap<Integer,Exam> esamiDaAssegnare = copiaEsami();
-			while(!esamiDaAssegnare.isEmpty()){
+			initialSolution = initializeInitialSolution();  				
+			SortedMap<Integer,Exam> esamiDaAssegnare = copiaEsami(); 		
+			continua=true;
+			
+			while(!esamiDaAssegnare.isEmpty() && continua) {	
 				Exam esameScelto;
-				worst=tmax;
+				worst=tmax;													
 				esamiPeggiori = new ArrayList<>();
-				esamiDaAssegnare.values().stream().forEach(e-> {
+				Iterator<Exam> iter = esamiDaAssegnare.values().iterator();
+				
+				while(iter.hasNext() && continua) {
+					Exam e = iter.next();
 					List<Integer> timeSlotsDisponibili = new ArrayList<>();
 					count=0;
 					for(int i=1; i<=tmax; i++){
@@ -241,57 +246,54 @@ public class TimeTable {
 							timeSlotsDisponibili.add(i);
 						}
 					}
-					
-					e.setTimeSlotsDisponibili(timeSlotsDisponibili);
-					if(count<worst || esamiPeggiori.isEmpty()){
-						esamiPeggiori = new ArrayList<>();
-						worst=count;
-						esamiPeggiori.add(e);
-					}
-					else if(count==worst){
-						esamiPeggiori.add(e);
-					}
-				});
-				if(esamiPeggiori.size()>0){
-					if(esamiPeggiori.size()>1){
-						esameScelto = esamiPeggiori.get(new Random().nextInt(esamiPeggiori.size()));
+					if(!timeSlotsDisponibili.isEmpty()) {
+						e.setTimeSlotsDisponibili(timeSlotsDisponibili);
+						if(count<worst || esamiPeggiori.isEmpty()){
+							esamiPeggiori = new ArrayList<>();
+							worst=count;
+							esamiPeggiori.add(e);
+						}
+						else if(count==worst){
+							esamiPeggiori.add(e);
+						}
 					}
 					else
-						esameScelto = esamiPeggiori.get(0);
-					if(esameScelto.getTimeSlotsDisponibili().size()==0) {
-						break;
-					}
+						continua = false;
+				}
+				
+				if(continua) {
+					esameScelto = esamiPeggiori.get(new Random().nextInt(esamiPeggiori.size()));
 					int r = esameScelto.getTimeSlotsDisponibili().get(new Random().nextInt(esameScelto.getTimeSlotsDisponibili().size()));
 					initialSolution.get(r).add(esameScelto);
 					esamiDaAssegnare.remove(esameScelto.getId());
 				}
-				
 			}
+			
 			if(esamiDaAssegnare.isEmpty())
 				trovato=true;
-			else
-				System.out.println("ho fatto più cicli");
-			
 		}
-	//	System.out.println(initialSolution);
+		
 		initialSolution.values().stream().forEach(t->sum(t.size()));
 		System.out.println("Esami assegnati: " + num);
+		
 		//Ricopio i ts negli esami di exams serve per stampa
-	for(int i=1;i<=tmax;i++)
-	{
-		List<Exam>l=initialSolution.get(i);
-		Iterator<Exam> iter=l.iterator();
-		while(iter.hasNext())
+		for(int i=1;i<=tmax;i++)
 		{
-			Exam e=iter.next();
-			Exam e1=exams.get(e.getId());
-			e1.setTime_slot(i);
+			List<Exam>l=initialSolution.get(i);
+			Iterator<Exam> iter=l.iterator();
+			while(iter.hasNext())
+			{
+				Exam e=iter.next();
+				Exam e1=exams.get(e.getId());
+				e1.setTime_slot(i);
+			}
 		}
-	}
+		
 		return initialSolution;
-		
-		
 	}
+	
+	
+	
 	public void Solve()
 	{
 
