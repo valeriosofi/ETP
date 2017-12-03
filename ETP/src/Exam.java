@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class Exam {
+public class Exam implements Cloneable{
 	private int id;
 	private int tot_stud;
 	private Integer time_slot;
@@ -56,4 +56,8 @@ public class Exam {
 	public void setTimeSlotsDisponibili(List<Integer> timeSlotsDisponibili) {
 		this.timeSlotsDisponibili = timeSlotsDisponibili;
 	}
+	public Object clone(){
+		try {Exam e = (Exam) super.clone(); 
+				return e;}    
+	catch (CloneNotSupportedException e) {return null;}     } 
 }

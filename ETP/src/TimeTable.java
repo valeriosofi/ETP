@@ -23,6 +23,7 @@ public class TimeTable {
 	private SortedMap<Integer,List<Exam>> initialSolution;
 	private SortedMap<Integer,List<Exam>> current_solution;
 	private Move[] tabu;
+	private List<Move> moves;
 	private List<SortedMap<Integer,List<Exam>>> neighborhood;
 	
 	
@@ -31,7 +32,8 @@ public class TimeTable {
 		exams=new TreeMap<>();
 		students=new TreeMap<>();
 		current_solution=new TreeMap<>();
-		tabu=new Move[3];
+		tabu=new Move[4];
+		
 		neighborhood=new ArrayList<>();
 	}
 	
@@ -292,6 +294,116 @@ public class TimeTable {
 		return initialSolution;
 	}
 	
+
+	private List<SortedMap<Integer, List<Exam>>> Generate_Neighborhood() {
+		List<SortedMap<Integer, List<Exam>>> res=new ArrayList<>();
+		List<Move> m=new ArrayList<>();
+
+		for(int i=1;i<=tmax;i++)
+		{
+		
+		 for(int j=i+1;j<=tmax;j++)
+		 { 	
+			 //dopo aver generato il clone faccio modifica al ts ->genero tutti gli swap
+			SortedMap<Integer,List<Exam>> neighbor=Clone_solution();
+			List<Exam> first=neighbor.remove(i);
+   
+			for(int k=0;k<first.size();k++)  //coerenza tra mappa e timeslot in ogni esame
+		    	first.get(k).setTime_slot(j);
+
+			List<Exam> second=neighbor.remove(j);
+			
+			for(int k=0;k<second.size();k++)      
+				second.get(k).setTime_slot(i);
+			neighbor.put(i,second);
+			neighbor.put(j, first);
+			res.add(neighbor);
+			Move move;
+			if(first.size()!=0)
+			   move=new Move(first.get(0),j,i);//il primo esame della lista rappresenta lo spostamento dell'intera lista
+			else
+			   move=new Move(null,j,i);//Se sposto da i->j mossa inversa proibita j->i
+												// Move (null,j,i) se lista vuota
+			m.add(move); //Ricavo la mossa usando come indice l'indice del neighbor scelto nel neighborhood
+		
+
+		  
+		 }
+		}
+		moves=m;
+		//System.out.println(res.size());
+		return res;
+	}
+	
+	
+	
+	
+	private SortedMap<Integer, List<Exam>> Clone_solution() {
+
+		SortedMap<Integer,List<Exam>> clone=initializeInitialSolution();
+		for(int i=1;i<=tmax;i++)
+		{
+			List<Exam> l=current_solution.get(i);
+			List<Exam> l_new=clone.get(i);
+			l.stream().forEach(e->{
+				Exam e_new=(Exam)e.clone();
+				l_new.add(e_new);
+			});
+		}
+		
+		
+		return clone;
+	}
+
+	private SortedMap<Integer, List<Exam>> best_In_Neighborhood() {
+
+			SortedMap<Integer,List<Exam>> best=new TreeMap<>();
+			double best_obj_in_neighborhood=-1;
+			Iterator<SortedMap<Integer,List<Exam>>> iter=neighborhood.iterator();
+			while(iter.hasNext())
+			{
+				SortedMap<Integer,List<Exam>> neighbor=iter.next();
+				double obj=Evaluate(neighbor);
+				/*if(best_obj_in_neighborhood==-1)//prima iterazione nel neighborhood 
+				{
+					best=neighbor;
+					int index=neighborhood.indexOf(neighbor);
+					Move m=moves.get(index);
+					tabu[iteration%tabu.length]=m;
+					best_obj_in_neighborhood=obj;
+				}
+				*/
+					if(obj<best_obj_in_neighborhood|| best_obj_in_neighborhood==-1)//se migliore delle altre
+					{
+						int index=neighborhood.indexOf(neighbor);
+						Move m=moves.get(index);
+						boolean bad=false;
+						for(int i=0;i<tabu.length;i++)
+						{
+							if( tabu[i]!=null &&tabu[i].Equals(m))
+								if(obj<current_obj)//aspiration
+								{
+									best=neighbor;
+									best_obj_in_neighborhood=obj;
+									//la mossa è già in tabu list e non la tocco
+								}
+								else
+									bad=true;
+
+						}
+						if(!bad)
+						{
+						 best_obj_in_neighborhood=obj;
+						 best=neighbor;
+						 index=iteration%tabu.length;
+						 tabu[index]=m;
+						}
+					}
+				
+			}
+		return best;
+	}
+
 	
 	
 	public void Solve()
@@ -301,6 +413,46 @@ public class TimeTable {
 		System.out.println(current_solution);
 		Print();
 		current_obj=Evaluate(current_solution);
-		return ;
+		
+	//Start Tabu search
+		iteration=0;
+		while(iteration<1000)//sostituire con il limite di tempo
+		{
+			neighborhood=Generate_Neighborhood();
+			SortedMap<Integer,List<Exam>> best=best_In_Neighborhood();
+			
+			current_solution=best;
+			//Ricopio i ts negli esami di exams serve per stampa
+			for(int i=1;i<=tmax;i++)
+			{
+				List<Exam>l=current_solution.get(i);
+				Iterator<Exam> iter=l.iterator();
+				while(iter.hasNext())
+				{
+					Exam e=iter.next();
+					Exam e1=exams.get(e.getId());
+					e1.setTime_slot(i);
+				}
+			}
+			
+			Print();
+		//	System.out.println(current_solution);
+			current_obj=Evaluate(current_solution);
+			iteration++;
+			if(iteration==500)
+				{
+				Move[] tmp=new Move[10];
+				for(int i=0;i<tabu.length;i++)
+					tmp[i]=tabu[i];
+				tabu=tmp;
+				}
+			
+		}
+		
+		System.out.println(current_solution);
+
+		return  ;
 	}
+
+
 }

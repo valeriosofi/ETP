@@ -30,6 +30,14 @@ public class Move {
 	}
 	public boolean Equals(Move m)
 	{
+		if(m.getE()==null)
+			if(e==null)
+                 return  from==m.getFrom() && to==m.getTo();
+			else
+				return false;
+		else
+			if(e==null)
+				return false;
 		return e.getId()==m.getE().getId() && from==m.getFrom() && to==m.getTo();
 	}
 
