@@ -334,10 +334,10 @@ public class TimeTable {
 		return clone;
 	}
 
-	private SortedMap<Integer, List<Exam>> best_In_Neighborhood() {
+	private Neighbor best_In_Neighborhood() {
 
-			SortedMap<Integer,List<Exam>> best=new TreeMap<>();
-			double best_obj_in_neighborhood=-1;
+			Neighbor best=null;
+		  double best_obj_in_neighborhood=-1;
 			Iterator<Neighbor> iter=neighborhood.iterator();
 			while(iter.hasNext())
 			{
@@ -354,7 +354,7 @@ public class TimeTable {
 							if( tabu[i]!=null &&tabu[i].Equals(m))
 								if(obj<best_obj)//aspiration
 								{
-									best=neighbor.getSolution();
+									best=neighbor;
 									best_obj_in_neighborhood=obj;
 									//la mossa è già in tabu list e non la tocco
 								}
@@ -365,9 +365,9 @@ public class TimeTable {
 						if(!bad)
 						{
 						 best_obj_in_neighborhood=obj;
-						 best=neighbor.getSolution();
-						int  index=iteration%tabu.length;
-						 tabu[index]=m;
+						 best=neighbor;
+					//	int  index=iteration%tabu.length;//continuo a sovrascrivere fino a quando non trovo il migliore nel neighborhood
+						// tabu[index]=m;
 						}
 					}
 				
@@ -392,9 +392,9 @@ public class TimeTable {
 		while(iteration<2000)//sostituire con il limite di tempo
 		{
 			neighborhood=Generate_Neighborhood();
-			SortedMap<Integer,List<Exam>> best=best_In_Neighborhood();
+			Neighbor best=best_In_Neighborhood();
 			
-			current_solution=best;
+			current_solution=best.getSolution();
 			current_obj=Evaluate(current_solution);
 			 
 			if(current_obj<best_obj)
@@ -402,8 +402,10 @@ public class TimeTable {
 				best_obj=current_obj;
 				best_solution=current_solution;
 			}
-
 			Print();
+
+			int  index=iteration%tabu.length;
+			 tabu[index]=best.getM();
 
 			iteration++;
 			if(iteration==500)
@@ -418,7 +420,7 @@ public class TimeTable {
 		
 		System.out.println(current_solution);
 		System.out.println(best_solution);
-
+		System.out.println("obj di arrivo: "+best_obj);
 		return  ;
 	}
 
