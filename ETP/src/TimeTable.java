@@ -11,6 +11,7 @@ import java.util.TreeMap;
 import java.io.*;
 import java.lang.Math;
 import static java.util.stream.Collectors.*;
+import static java.util.Comparator.*; 
 public class TimeTable {
 	private Integer tmax;
 	private List<Exam> esamiPeggiori;
@@ -23,8 +24,8 @@ public class TimeTable {
 	private SortedMap<Integer,List<Exam>> initialSolution;
 	private SortedMap<Integer,List<Exam>> current_solution;
 	private Move[] tabu;
-	private List<Move> moves;
-	private List<SortedMap<Integer,List<Exam>>> neighborhood;
+//	private List<Move> moves;
+	private List<Neighbor> neighborhood;
 	
 	
 	public TimeTable()
@@ -66,12 +67,7 @@ public class TimeTable {
 			 }
 			 E=exams.keySet().size();
 			 n=new int[E][E];
-			 //System.out.println(exams.keySet().size());
-			 
-		/*	 for (int i = 0; i < exams.keySet().size(); i++) {        
-				 n[i] = new int[exams.keySet().size()]; 
-			 }
-*/
+
 		 }  catch (IOException e) {};
 		 
 		 try(BufferedReader in=new BufferedReader(new FileReader(stu));
@@ -183,14 +179,8 @@ public class TimeTable {
 	private void Print()
 	{
 		try(PrintWriter out=new PrintWriter(new FileWriter("C:\\\\Users\\\\angij\\\\Desktop\\\\Polito magistrale 1 anno\\\\Optimization methods and algoritms\\\\Assignment\\instancename_OMAAL_group04.sol")))
-		{
-			
-				Iterator<Exam> iter=exams.values().iterator();
-		while(iter.hasNext())
-		{
-			Exam e=iter.next();
-			out.format("%d %d\n",e.getId(),e.getTime_slot());
-		}
+		{			
+			current_solution.values().stream().flatMap(l->l.stream()).sorted(comparing(e->e.getId())).forEach(e->out.format("%d %d\n",e.getId(),e.getTime_slot()));
 	 }catch (IOException e) {};
 	}
 	
@@ -267,6 +257,7 @@ public class TimeTable {
 					esameScelto = esamiPeggiori.get(new Random().nextInt(esamiPeggiori.size()));
 					int r = esameScelto.getTimeSlotsDisponibili().get(new Random().nextInt(esameScelto.getTimeSlotsDisponibili().size()));
 					initialSolution.get(r).add(esameScelto);
+					esameScelto.setTime_slot(r);
 					esamiDaAssegnare.remove(esameScelto.getId());
 				}
 			}
@@ -277,27 +268,13 @@ public class TimeTable {
 		
 		initialSolution.values().stream().forEach(t->sum(t.size()));
 		System.out.println("Esami assegnati: " + num);
-		
-		//Ricopio i ts negli esami di exams serve per stampa
-		for(int i=1;i<=tmax;i++)
-		{
-			List<Exam>l=initialSolution.get(i);
-			Iterator<Exam> iter=l.iterator();
-			while(iter.hasNext())
-			{
-				Exam e=iter.next();
-				Exam e1=exams.get(e.getId());
-				e1.setTime_slot(i);
-			}
-		}
-		
 		return initialSolution;
 	}
 	
 
-	private List<SortedMap<Integer, List<Exam>>> Generate_Neighborhood() {
-		List<SortedMap<Integer, List<Exam>>> res=new ArrayList<>();
-		List<Move> m=new ArrayList<>();
+	private List<Neighbor> Generate_Neighborhood() {
+		List<Neighbor> res=new ArrayList<>();
+		//List<Move> m=new ArrayList<>();
 
 		for(int i=1;i<=tmax;i++)
 		{
@@ -317,20 +294,21 @@ public class TimeTable {
 				second.get(k).setTime_slot(i);
 			neighbor.put(i,second);
 			neighbor.put(j, first);
-			res.add(neighbor);
+			//res.add(neighbor);
 			Move move;
 			if(first.size()!=0)
 			   move=new Move(first.get(0),j,i);//il primo esame della lista rappresenta lo spostamento dell'intera lista
 			else
 			   move=new Move(null,j,i);//Se sposto da i->j mossa inversa proibita j->i
 												// Move (null,j,i) se lista vuota
-			m.add(move); //Ricavo la mossa usando come indice l'indice del neighbor scelto nel neighborhood
-		
+			//m.add(move); //Ricavo la mossa usando come indice l'indice del neighbor scelto nel neighborhood
+		    Neighbor n=new Neighbor(neighbor,move);
+		    res.add(n);
 
 		  
 		 }
 		}
-		moves=m;
+	//	moves=m;
 		//System.out.println(res.size());
 		return res;
 	}
@@ -359,31 +337,23 @@ public class TimeTable {
 
 			SortedMap<Integer,List<Exam>> best=new TreeMap<>();
 			double best_obj_in_neighborhood=-1;
-			Iterator<SortedMap<Integer,List<Exam>>> iter=neighborhood.iterator();
+			Iterator<Neighbor> iter=neighborhood.iterator();
 			while(iter.hasNext())
 			{
-				SortedMap<Integer,List<Exam>> neighbor=iter.next();
-				double obj=Evaluate(neighbor);
-				/*if(best_obj_in_neighborhood==-1)//prima iterazione nel neighborhood 
-				{
-					best=neighbor;
-					int index=neighborhood.indexOf(neighbor);
-					Move m=moves.get(index);
-					tabu[iteration%tabu.length]=m;
-					best_obj_in_neighborhood=obj;
-				}
-				*/
+				Neighbor neighbor=iter.next();
+				double obj=Evaluate(neighbor.getSolution());
+	
 					if(obj<best_obj_in_neighborhood|| best_obj_in_neighborhood==-1)//se migliore delle altre
 					{
-						int index=neighborhood.indexOf(neighbor);
-						Move m=moves.get(index);
+						//int index=neighborhood.indexOf(neighbor);
+						Move m=neighbor.getM();
 						boolean bad=false;
 						for(int i=0;i<tabu.length;i++)
 						{
 							if( tabu[i]!=null &&tabu[i].Equals(m))
 								if(obj<current_obj)//aspiration
 								{
-									best=neighbor;
+									best=neighbor.getSolution();
 									best_obj_in_neighborhood=obj;
 									//la mossa è già in tabu list e non la tocco
 								}
@@ -394,8 +364,8 @@ public class TimeTable {
 						if(!bad)
 						{
 						 best_obj_in_neighborhood=obj;
-						 best=neighbor;
-						 index=iteration%tabu.length;
+						 best=neighbor.getSolution();
+						int  index=iteration%tabu.length;
 						 tabu[index]=m;
 						}
 					}
@@ -413,7 +383,6 @@ public class TimeTable {
 		System.out.println(current_solution);
 		Print();
 		current_obj=Evaluate(current_solution);
-		
 	//Start Tabu search
 		iteration=0;
 		while(iteration<1000)//sostituire con il limite di tempo
@@ -422,21 +391,8 @@ public class TimeTable {
 			SortedMap<Integer,List<Exam>> best=best_In_Neighborhood();
 			
 			current_solution=best;
-			//Ricopio i ts negli esami di exams serve per stampa
-			for(int i=1;i<=tmax;i++)
-			{
-				List<Exam>l=current_solution.get(i);
-				Iterator<Exam> iter=l.iterator();
-				while(iter.hasNext())
-				{
-					Exam e=iter.next();
-					Exam e1=exams.get(e.getId());
-					e1.setTime_slot(i);
-				}
-			}
-			
+
 			Print();
-		//	System.out.println(current_solution);
 			current_obj=Evaluate(current_solution);
 			iteration++;
 			if(iteration==500)
