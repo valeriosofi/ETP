@@ -402,7 +402,6 @@ public class TimeTable {
 				best_obj=current_obj;
 				best_solution=current_solution;
 			}
-			Print();
 
 			int  index=iteration%tabu.length;
 			 tabu[index]=best.getM();
@@ -417,7 +416,8 @@ public class TimeTable {
 				}
 			
 		}
-		
+		Print();
+
 		System.out.println(current_solution);
 		System.out.println(best_solution);
 		System.out.println("obj di arrivo: "+best_obj);
