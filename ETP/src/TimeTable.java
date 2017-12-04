@@ -19,10 +19,11 @@ public class TimeTable {
 	private SortedMap<String,List<Exam>> students;  //per ogni matricola la lista degli esami a cui si è iscritto
 	private int[][] n;
 	private int E,iteration,S,count, worst,num;
-	private double current_obj;
+	private double current_obj,best_obj;
 	private boolean trovato = false, compatibile=true, continua=true;
 	private SortedMap<Integer,List<Exam>> initialSolution;
 	private SortedMap<Integer,List<Exam>> current_solution;
+	private SortedMap<Integer,List<Exam>> best_solution;
 	private Move[] tabu;
 //	private List<Move> moves;
 	private List<Neighbor> neighborhood;
@@ -180,7 +181,7 @@ public class TimeTable {
 	{
 		try(PrintWriter out=new PrintWriter(new FileWriter("C:\\\\Users\\\\angij\\\\Desktop\\\\Polito magistrale 1 anno\\\\Optimization methods and algoritms\\\\Assignment\\instancename_OMAAL_group04.sol")))
 		{			
-			current_solution.values().stream().flatMap(l->l.stream()).sorted(comparing(e->e.getId())).forEach(e->out.format("%d %d\n",e.getId(),e.getTime_slot()));
+			best_solution.values().stream().flatMap(l->l.stream()).sorted(comparing(e->e.getId())).forEach(e->out.format("%d %d\n",e.getId(),e.getTime_slot()));
 	 }catch (IOException e) {};
 	}
 	
@@ -351,7 +352,7 @@ public class TimeTable {
 						for(int i=0;i<tabu.length;i++)
 						{
 							if( tabu[i]!=null &&tabu[i].Equals(m))
-								if(obj<current_obj)//aspiration
+								if(obj<best_obj)//aspiration
 								{
 									best=neighbor.getSolution();
 									best_obj_in_neighborhood=obj;
@@ -380,24 +381,34 @@ public class TimeTable {
 	{
 
 		current_solution=Generate_Initial_Solution();
+		best_solution=current_solution;
 		System.out.println(current_solution);
 		Print();
 		current_obj=Evaluate(current_solution);
+		best_obj=current_obj;
+		System.out.println("obj di partenza:"+current_obj);
 	//Start Tabu search
 		iteration=0;
-		while(iteration<1000)//sostituire con il limite di tempo
+		while(iteration<2000)//sostituire con il limite di tempo
 		{
 			neighborhood=Generate_Neighborhood();
 			SortedMap<Integer,List<Exam>> best=best_In_Neighborhood();
 			
 			current_solution=best;
+			current_obj=Evaluate(current_solution);
+			 
+			if(current_obj<best_obj)
+			{
+				best_obj=current_obj;
+				best_solution=current_solution;
+			}
 
 			Print();
-			current_obj=Evaluate(current_solution);
+
 			iteration++;
 			if(iteration==500)
 				{
-				Move[] tmp=new Move[10];
+				Move[] tmp=new Move[15];
 				for(int i=0;i<tabu.length;i++)
 					tmp[i]=tabu[i];
 				tabu=tmp;
@@ -406,6 +417,7 @@ public class TimeTable {
 		}
 		
 		System.out.println(current_solution);
+		System.out.println(best_solution);
 
 		return  ;
 	}
