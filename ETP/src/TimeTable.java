@@ -138,7 +138,7 @@ public class TimeTable {
 		double obj=0;
 		for (int i=1;i<=tmax-1;i++) 
 		{
-			if(solution.containsKey(i))
+			if(!solution.get(i).isEmpty())
 			{
 				List<Exam>l=solution.get(i);
 
@@ -146,9 +146,9 @@ public class TimeTable {
 			while(iter.hasNext())//per ogni esame di ogni time_slot
 			{
 				Exam e=iter.next();
-				for(int j=i+1;j<=tmax;j++) //Considero gli esami nei time_slot successivi
+				for(int j=i+1;j<=i+5 && j<=tmax;j++) //devo considerare la penalità
 				{
-					if(solution.containsKey(j))
+					if(!solution.get(j).isEmpty())
 					{
 					List<Exam> l_int=solution.get(j);
 					Iterator<Exam> iter_int=l_int.iterator();
@@ -156,14 +156,13 @@ public class TimeTable {
 					{
 						Exam e_int=iter_int.next();
 						int distance=Math.abs(e.getTime_slot()-e_int.getTime_slot());
-						if(distance<=5) //devo considerare la penalità
-						{
+						
 							int row=e.getId()-1;
 							int col=e_int.getId()-1;
 							double po=Math.pow(2,5-distance);
 							
 							obj+=po*n[row][col];
-						}
+						
 					    
 					}
 				}
@@ -267,8 +266,8 @@ public class TimeTable {
 				trovato=true;
 		}
 		
-		initialSolution.values().stream().forEach(t->sum(t.size()));
-		System.out.println("Esami assegnati: " + num);
+	//	initialSolution.values().stream().forEach(t->sum(t.size()));
+	//	System.out.println("Esami assegnati: " + num);
 		return initialSolution;
 	}
 	
@@ -285,16 +284,129 @@ public class TimeTable {
 			 //dopo aver generato il clone faccio modifica al ts ->genero tutti gli swap
 			SortedMap<Integer,List<Exam>> neighbor=Clone_solution();
 			List<Exam> first=neighbor.remove(i);
+			
+			Iterator<Exam> iter=first.iterator();
+			double obj_neighbor=current_obj*S;
+			while(iter.hasNext())//calcolo obj del neighbor da quella della soluzione corrente
+			{
+				Exam e=iter.next();
+				for(int k=i-5;k<=i+5 && k<=tmax ;k++)
+				{
+					if(k>0 &&k!=i)
+					{
+						List<Exam> l_int=neighbor.get(k);
+						Iterator<Exam> iter_int=l_int.iterator();
+						while(iter_int.hasNext())
+						{
+							Exam e_int=iter_int.next();
+													//i
+							int distance=Math.abs(e.getTime_slot()-e_int.getTime_slot());
+							
+							int row=e.getId()-1;
+							int col=e_int.getId()-1;
+							double po=Math.pow(2,5-distance);
+							
+							obj_neighbor-=po*n[row][col]; //- devo sottrarre
+						}
+					}
+				}
+			}
    
 			for(int k=0;k<first.size();k++)  //coerenza tra mappa e timeslot in ogni esame
 		    	first.get(k).setTime_slot(j);
 
 			List<Exam> second=neighbor.remove(j);
 			
+			
+			
+			Iterator<Exam> iter_second=second.iterator();
+			while(iter_second.hasNext())//calcolo obj del neighbor da quella della soluzione corrente
+			{
+				Exam e=iter_second.next();
+				for(int k=j-5;k<=j+5 && k<=tmax ;k++)
+				{
+					if(k>0 &&k!=i &&k!=j) //il caso k=i è incluso nel ciclo precedente
+					{
+						List<Exam> l_int=neighbor.get(k);
+						Iterator<Exam> iter_int=l_int.iterator();
+						while(iter_int.hasNext())
+						{
+							Exam e_int=iter_int.next();
+													//i
+							int distance=Math.abs(e.getTime_slot()-e_int.getTime_slot());
+							
+							int row=e.getId()-1;
+							int col=e_int.getId()-1;
+							double po=Math.pow(2,5-distance);
+							
+							obj_neighbor-=po*n[row][col]; //- devo sottrarre
+						}
+					}
+				}
+			}
+			
 			for(int k=0;k<second.size();k++)      
 				second.get(k).setTime_slot(i);
 			neighbor.put(i,second);
 			neighbor.put(j, first);
+			
+			//adesso sommmo dopo aver scambiato le liste
+			first=neighbor.get(i);
+			 iter=first.iterator();
+			while(iter.hasNext())//calcolo obj del neighbor da quella della soluzione corrente
+			{
+				Exam e=iter.next();
+				for(int k=i-5;k<=i+5 && k<=tmax ;k++)
+				{
+					if(k>0 && k!=i)
+					{
+						List<Exam> l_int=neighbor.get(k);
+						Iterator<Exam> iter_int=l_int.iterator();
+						while(iter_int.hasNext())
+						{
+							Exam e_int=iter_int.next();
+													//i
+							int distance=Math.abs(e.getTime_slot()-e_int.getTime_slot());
+							
+							int row=e.getId()-1;
+							int col=e_int.getId()-1;
+							double po=Math.pow(2,5-distance);
+							
+							obj_neighbor+=po*n[row][col]; //sommo
+						}
+					}
+				}
+			}
+			
+			second=neighbor.get(j);
+			 iter_second=second.iterator();
+			while(iter_second.hasNext())//calcolo obj del neighbor da quella della soluzione corrente
+			{
+				Exam e=iter_second.next();
+				for(int k=j-5;k<=j+5 && k<=tmax ;k++)
+				{
+					if(k>0 &&k!=i&&k!=j) //il caso k=i è incluso nel ciclo precedente
+					{
+						List<Exam> l_int=neighbor.get(k);
+						Iterator<Exam> iter_int=l_int.iterator();
+						while(iter_int.hasNext())
+						{
+							Exam e_int=iter_int.next();
+													//i
+							int distance=Math.abs(e.getTime_slot()-e_int.getTime_slot());
+							
+							int row=e.getId()-1;
+							int col=e_int.getId()-1;
+							double po=Math.pow(2,5-distance);
+							
+							obj_neighbor+=po*n[row][col]; //sommo
+						}
+					}
+				}
+			}
+			
+			obj_neighbor=obj_neighbor/S;
+			//System.out.println(Evaluate(neighbor));
 			//res.add(neighbor);
 			Move move;
 			if(first.size()!=0)
@@ -303,7 +415,7 @@ public class TimeTable {
 			   move=new Move(null,j,i);//Se sposto da i->j mossa inversa proibita j->i
 												// Move (null,j,i) se lista vuota
 			//m.add(move); //Ricavo la mossa usando come indice l'indice del neighbor scelto nel neighborhood
-		    Neighbor n=new Neighbor(neighbor,move);
+		    Neighbor n=new Neighbor(neighbor,move,obj_neighbor);
 		    res.add(n);
 
 		  
@@ -389,14 +501,14 @@ public class TimeTable {
 		System.out.println("obj di partenza:"+current_obj);
 	//Start Tabu search
 		iteration=0;
-		while(iteration<2000)//sostituire con il limite di tempo
+		while(iteration<50)//sostituire con il limite di tempo
 		{
 			neighborhood=Generate_Neighborhood();
 			Neighbor best=best_In_Neighborhood();
 			
 			current_solution=best.getSolution();
-			current_obj=Evaluate(current_solution);
-			 
+			//current_obj=Evaluate(current_solution);
+			current_obj=best.getObj();
 			if(current_obj<best_obj)
 			{
 				best_obj=current_obj;
